@@ -93,4 +93,88 @@ export class BotUpdate {
       await ctx.answerCbQuery('Эта функция доступна только для подтвержденных поставщиков.');
     }
   }
+
+  @Action(/choose_response_(.+)/)
+  async onChooseResponse(@Ctx() ctx: SceneContext & { match: string[] }) {
+    await ctx.answerCbQuery(); // Acknowledge the callback query
+    if (!ctx.from) return;
+
+    const responseId = ctx.match[1];
+
+    const chosenResponse = await this.prisma.response.findUnique({
+      where: { id: responseId },
+      include: {
+        request: {
+          include: {
+            user: true, // The designer
+            responses: {
+              include: {
+                user: true, // Other suppliers
+              },
+            },
+          },
+        },
+        user: true, // The chosen supplier
+      },
+    });
+
+    if (!chosenResponse || !chosenResponse.request || !chosenResponse.request.user || !chosenResponse.user) {
+      console.error('Could not find full response details to choose supplier.');
+      return;
+    }
+
+    const designer = chosenResponse.request.user;
+    const chosenSupplier = chosenResponse.user;
+    const request = chosenResponse.request;
+
+    // Ensure only the designer who created the request can choose a supplier
+    if (designer.telegram_id !== String(ctx.from.id)) {
+      await ctx.reply('Вы не являетесь дизайнером этой заявки и не можете выбрать поставщика.');
+      return;
+    }
+
+    // Check if a supplier has already been chosen for this request
+    if (request.chosen_response_id) {
+      await ctx.editMessageText(
+        `Поставщик для этой заявки уже выбран: ${request.responses.find(r => r.id === request.chosen_response_id)?.user.telegram_username || 'Неизвестный поставщик'}.`,
+      );
+      return;
+    }
+
+    // Update the request with the chosen response
+    await this.prisma.request.update({
+      where: { id: request.id },
+      data: {
+        chosen_response_id: responseId,
+        status: 'IN_PROGRESS', // Or a suitable status
+      },
+    });
+
+    // Notify the designer
+    const designerMessage = `Вы выбрали поставщика "${chosenSupplier.telegram_username}" для заявки "${request.details_text}".\n\nСвяжитесь с ним для дальнейшего взаимодействия: @${chosenSupplier.telegram_username}`;
+    await this.botService.sendMessage(designer.telegram_id, designerMessage);
+
+    // Notify the chosen supplier
+    if (chosenSupplier.telegram_id) {
+      const chosenSupplierMessage = `Поздравляем! Дизайнер "${designer.telegram_username}" выбрал вас для заявки "${request.details_text}".\n\nСвяжитесь с ним: @${designer.telegram_username}`;
+      await this.botService.sendMessage(chosenSupplier.telegram_id, chosenSupplierMessage);
+    }
+
+    // Notify other suppliers
+    for (const response of request.responses) {
+      if (response.id !== responseId && response.user.telegram_id) {
+        const otherSupplierMessage = `Дизайнер "${designer.telegram_username}" выбрал другого поставщика для заявки "${request.details_text}". Спасибо за ваш отклик!`;
+        await this.botService.sendMessage(response.user.telegram_id, otherSupplierMessage);
+      }
+    }
+
+    // Edit the original message to reflect the choice
+    if (ctx.callbackQuery?.message) {
+      const originalMessageText = (ctx.callbackQuery.message as any).text; // Telegraf types can be tricky here
+      const newText = `${originalMessageText}\n\n✅ Выбран поставщик: @${chosenSupplier.telegram_username}`;
+      await ctx.editMessageText(newText, {
+        reply_markup: undefined, // Remove the inline keyboard
+      });
+    }
+  }
 }
