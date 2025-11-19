@@ -1,0 +1,152 @@
+body {
+  font-family: sans-serif;
+  padding: 20px;
+  background-color: #f8f9fa;
+  color: #333; /* Default text color to black/dark gray */
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.search-filter {
+  margin-bottom: 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+#searchInput, #statusFilter {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  flex-grow: 1;
+}
+
+#statusFilter {
+  flex-grow: 0;
+  min-width: 150px;
+}
+
+#requestsList, #responsesList {
+  list-style: none;
+  padding: 0;
+  display: grid; /* Use grid for card layout */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* Responsive cards */
+  gap: 20px; /* Space between cards */
+}
+
+.card {
+  margin-bottom: 10px;
+  border: 1px solid #e0e0e0;
+  padding: 15px;
+  border-radius: 8px;
+  background-color: white;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+  transition: box-shadow 0.3s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px; /* Ensure consistent card height */
+}
+
+.card:hover {
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 10px;
+  color: #333;
+  font-size: 1.1em;
+}
+
+.card p {
+  margin-bottom: 5px;
+  color: #555;
+  font-size: 0.9em;
+}
+
+.card a {
+  text-decoration: none;
+  color: #007bff;
+  font-weight: bold;
+  align-self: flex-start; /* Align link to bottom-left */
+}
+
+.text-truncate {
+  white-space: normal; /* Allow text to wrap */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* Show up to 3 lines */
+  -webkit-box-orient: vertical;
+  max-height: 4.5em; /* Approx 3 lines * line-height */
+  line-height: 1.5em;
+}
+
+.status-chosen {
+  color: #28a745; /* Green for CHOSEN */
+  font-weight: bold;
+}
+
+.status-sent {
+  color: #007bff; /* Blue for SENT */
+  font-weight: bold;
+}
+
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  text-decoration: none;
+  border-radius: 5px;
+  margin-top: 20px;
+  border: none;
+  cursor: pointer;
+}
+
+.btn:hover {
+  background-color: #0056b3;
+}
+
+.photo-gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.photo-item {
+  width: 150px;
+  height: 150px;
+  background-color: #f0f0f0;
+  border-radius: 8px;
+  overflow: hidden;
+  position: relative;
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+}
+
+.skeleton {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}

@@ -1,0 +1,65 @@
+<link rel="stylesheet" href="/css/style.css">
+<div class="container">
+  <h1>{{request.details_text}}</h1>
+  <p>Status: <strong>{{request.status}}</strong></p>
+
+  {{#eq role "designer"}}
+    <div class="status-actions" style="margin-bottom: 20px;">
+      <form action="/webapp/requests/{{request.id}}/status" method="post">
+        <input type="hidden" name="designerId" value="{{userId}}">
+        <label>
+          <input type="radio" name="status" value="OPEN" {{#eq request.status "OPEN"}}checked{{/eq}}> Open
+        </label>
+        <label style="margin-left: 15px;">
+          <input type="radio" name="status" value="CLOSED" {{#eq request.status "CLOSED"}}checked{{/eq}}> Closed
+        </label>
+        <button type="submit" class="btn" style="margin-left: 20px;">Update Status</button>
+      </form>
+    </div>
+  {{/eq}}
+
+  <h2>Photos</h2>
+  <div class="photo-gallery">
+    {{#each request.request_files}}
+      <div class="photo-item">
+        <div class="skeleton"></div>
+        <img src="{{this.directus_files.photo_url}}" alt="Request Photo" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
+      </div>
+    {{/each}}
+  </div>
+
+  <hr>
+
+  <h2>Responses</h2>
+  {{#if request.response}}
+    <ul id="responsesList">
+      {{#each request.response}}
+        <li>
+          <h4>{{this.user.username}}</h4>
+          <p>{{this.details_text}}</p>
+          <div class="photo-gallery">
+            {{#each this.response_files}}
+              <div class="photo-item">
+                <div class="skeleton"></div>
+                <img src="{{this.directus_files.photo_url}}" alt="Response Photo" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
+              </div>
+            {{/each}}
+          </div>
+          {{#eq ../request.status "OPEN"}}
+            <form action="/webapp/responses/{{this.id}}/choose" method="post">
+              <button type="submit" class="btn">Choose Supplier</button>
+            </form>
+          {{else}}
+            {{#eq this.status "CHOSEN"}}
+              <p><strong>Contact: {{this.user.contact_info}}</strong></p>
+            {{/eq}}
+          {{/eq}}
+        </li>
+      {{/each}}
+    </ul>
+  {{else}}
+    <p>No responses yet.</p>
+  {{/if}}
+
+  <a href="/webapp/requests?userId={{request.designer_id}}&role=designer" class="btn">Back to Requests</a>
+</div>

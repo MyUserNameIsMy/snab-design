@@ -1,0 +1,24 @@
+<link rel="stylesheet" href="/css/style.css">
+<div class="container">
+  <h1>My Responses</h1>
+  <div class="search-filter">
+    <input type="text" id="searchInput" placeholder="Search...">
+    <select id="statusFilter">
+      <option value="">All Statuses</option>
+      <option value="SENT">Sent</option>
+      <option value="CHOSEN">Chosen</option>
+    </select>
+  </div>
+  <ul id="responsesList">
+    {{#each responses}}
+      <li class="card">
+        <a href="/webapp/responses/{{this.id}}">
+          <h3>Request: <span class="text-truncate">{{this.request.details_text}}</span></h3>
+          <p>Response: <span class="text-truncate">{{this.details_text}}</span></p>
+          <p>Status: <span class="response-status-value status-{{toLowerCase this.status}}">{{this.status}}</span></p>
+        </a>
+      </li>
+    {{/each}}
+  </ul>
+</div>
+<script src="/js/responses.js"></script>

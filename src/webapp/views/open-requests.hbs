@@ -1,0 +1,17 @@
+<link rel="stylesheet" href="/css/style.css">
+<div class="container">
+  <h1>Open Requests</h1>
+  <ul id="requestsList">
+    {{#each requests}}
+      <li class="card">
+        <h3><span class="text-truncate">{{this.details_text}}</span></h3>
+        <p>Status: <span class="status-{{toLowerCase this.status}}">{{this.status}}</span></p>
+        <form action="/webapp/send-response-prompt" method="post">
+          <input type="hidden" name="requestId" value="{{this.id}}">
+          <input type="hidden" name="supplierTelegramId" value="{{../userId}}">
+          <button type="submit" class="btn">Откликнуться</button>
+        </form>
+      </li>
+    {{/each}}
+  </ul>
+</div>

@@ -1,0 +1,23 @@
+<link rel="stylesheet" href="/css/style.css">
+<div class="container">
+  <h1>My Requests</h1>
+  <div class="search-filter">
+    <input type="text" id="searchInput" placeholder="Search...">
+    <select id="statusFilter">
+      <option value="">All Statuses</option>
+      <option value="OPEN">Open</option>
+      <option value="CLOSED">Closed</option>
+    </select>
+  </div>
+  <ul id="requestsList">
+    {{#each requests}}
+      <li class="card">
+        <a href="/webapp/requests/{{this.id}}?userId={{../userId}}&role={{../role}}">
+          <h3><span class="text-truncate">{{this.details_text}}</span></h3>
+          <p>Status: <span class="status-{{toLowerCase this.status}}">{{this.status}}</span></p>
+        </a>
+      </li>
+    {{/each}}
+  </ul>
+</div>
+<script src="/js/requests.js"></script>

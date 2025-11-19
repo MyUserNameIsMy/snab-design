@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  database:
+    image: postgres:16
+    container_name: snab_design_db
+    ports:
+      - "5440:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: snab_design
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: rootcaroot
+    restart: unless-stopped
+
+  directus:
+    image: directus/directus:latest
+    container_name: snab_design_directus
+    ports:
+      - "8055:8055"
+    volumes:
+      - directus_uploads:/directus/uploads
+      - directus_extensions:/directus/extensions
+    environment:
+      KEY: "your-strong-random-key" # Change this to a long, random string
+      SECRET: "your-strong-random-secret" # Change this to another long, random string
+      DB_CLIENT: "pg"
+      DB_HOST: "database"
+      DB_PORT: "5432"
+      DB_DATABASE: "snab_design"
+      DB_USER: "postgres"
+      DB_PASSWORD: "rootcaroot"
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_PASSWORD: "password" # Change this in the Directus UI after first login
+    depends_on:
+      - database
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  directus_uploads:
+  directus_extensions:
