@@ -33,7 +33,7 @@ export class WebappService {
         },
         include: { request_files: { include: { directus_files: true } } },
       });
-      requests.forEach(req => {
+      requests.forEach((req) => {
         this.addPhotoUrls(req.request_files);
         req.details_text = this.truncateText(req.details_text); // Truncate for list view
       });
@@ -69,10 +69,12 @@ export class WebappService {
           status: 'asc', // Sort by status, CHOSEN first
         },
       });
-      responses.forEach(res => {
+      responses.forEach((res) => {
         if (res.request) {
           this.addPhotoUrls(res.request.request_files);
-          res.request.details_text = this.truncateText(res.request.details_text); // Truncate for list view
+          res.request.details_text = this.truncateText(
+            res.request.details_text,
+          ); // Truncate for list view
         }
         this.addPhotoUrls(res.response_files);
         res.details_text = this.truncateText(res.details_text); // Truncate for list view
@@ -118,10 +120,10 @@ export class WebappService {
     });
 
     if (response) {
-        this.addPhotoUrls(response.response_files);
-        if (response.request) {
-            this.addPhotoUrls(response.request.request_files);
-        }
+      this.addPhotoUrls(response.response_files);
+      if (response.request) {
+        this.addPhotoUrls(response.request.request_files);
+      }
     }
     return response;
   }
@@ -131,7 +133,7 @@ export class WebappService {
       where: { status: 'OPEN' },
       include: { request_files: { include: { directus_files: true } } },
     });
-    requests.forEach(req => {
+    requests.forEach((req) => {
       this.addPhotoUrls(req.request_files);
       req.details_text = this.truncateText(req.details_text); // Truncate for list view
     });
@@ -162,7 +164,12 @@ export class WebappService {
       },
     });
 
-    if (!fullResponse || !fullResponse.request || !fullResponse.user || !fullResponse.request.user) {
+    if (
+      !fullResponse ||
+      !fullResponse.request ||
+      !fullResponse.user ||
+      !fullResponse.request.user
+    ) {
       throw new Error('Could not retrieve all parties for contact exchange.');
     }
 
@@ -199,13 +206,14 @@ export class WebappService {
 
     const messageText = `Заявка:\n\n${request.details_text}`;
     const keyboard = Markup.inlineKeyboard([
-      Markup.button.callback(
-        'Откликнуться',
-        `respond_request_${request.id}`,
-      ),
+      Markup.button.callback('Откликнуться', `respond_request_${request.id}`),
     ]);
 
-    await this.botService.sendMessage(supplierTelegramId, messageText, keyboard);
+    await this.botService.sendMessage(
+      supplierTelegramId,
+      messageText,
+      keyboard,
+    );
   }
 
   async updateRequestStatus(requestId: string, status: 'OPEN' | 'CLOSED') {
@@ -221,7 +229,7 @@ export class WebappService {
 
     files.forEach((file) => {
       if (file.directus_files) {
-        file.directus_files.photo_url = `${directusUrl}/files/${file.directus_files.id}`;
+        file.directus_files.photo_url = `${directusUrl}/assets/${file.directus_files.id}`;
       }
     });
   }
