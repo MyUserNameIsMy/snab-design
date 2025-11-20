@@ -1,36 +1,37 @@
 <link rel="stylesheet" href="/css/style.css">
 <div class="container">
   <h1>{{request.details_text}}</h1>
-  <p>Status: <strong>{{request.status}}</strong></p>
-
-  {{#eq role "designer"}}
-    <div class="status-actions" style="margin-bottom: 20px;">
-      <form action="/webapp/requests/{{request.id}}/status" method="post">
-        <input type="hidden" name="designerId" value="{{userId}}">
-        <label>
-          <input type="radio" name="status" value="OPEN" {{#eq request.status "OPEN"}}checked{{/eq}}> Open
+  
+  <div class="request-header">
+    <p>Статус: <strong>{{request.status}}</strong></p>
+    {{#eq role "designer"}}
+      <div class="status-toggle-container">
+        <form id="statusForm" action="/webapp/requests/{{request.id}}/status" method="post" style="display: none;">
+          <input type="hidden" name="designerId" value="{{userId}}">
+          <input type="hidden" id="statusInput" name="status" value="{{#if (eq request.status "OPEN")}}CLOSED{{else}}OPEN{{/if}}">
+        </form>
+        <label class="toggle-switch" id="toggleSwitch">
+          <input type="checkbox" id="statusToggle" {{#eq request.status "OPEN"}}checked{{/eq}}>
+          <span class="thumb"></span>
         </label>
-        <label style="margin-left: 15px;">
-          <input type="radio" name="status" value="CLOSED" {{#eq request.status "CLOSED"}}checked{{/eq}}> Closed
-        </label>
-        <button type="submit" class="btn" style="margin-left: 20px;">Update Status</button>
-      </form>
-    </div>
-  {{/eq}}
+        <span id="toggleLabel">{{#eq request.status "OPEN"}}Открыта{{else}}Закрыта{{/eq}}</span>
+      </div>
+    {{/eq}}
+  </div>
 
-  <h2>Photos</h2>
+  <h2>Фото</h2>
   <div class="photo-gallery">
     {{#each request.request_files}}
       <div class="photo-item">
         <div class="skeleton"></div>
-        <img src="{{this.directus_files.photo_url}}" alt="Request Photo" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
+        <img src="{{this.directus_files.photo_url}}" alt="Фото заявки" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
       </div>
     {{/each}}
   </div>
 
   <hr>
 
-  <h2>Responses</h2>
+  <h2>Отклики</h2>
   {{#if request.response}}
     <ul id="responsesList">
       {{#each request.response}}
@@ -41,25 +42,52 @@
             {{#each this.response_files}}
               <div class="photo-item">
                 <div class="skeleton"></div>
-                <img src="{{this.directus_files.photo_url}}" alt="Response Photo" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
+                <img src="{{this.directus_files.photo_url}}" alt="Фото отклика" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
               </div>
             {{/each}}
           </div>
-          {{#eq ../request.status "OPEN"}}
-            <form action="/webapp/responses/{{this.id}}/choose" method="post">
-              <button type="submit" class="btn">Choose Supplier</button>
-            </form>
+          
+          {{#eq this.status "CHOSEN"}}
+            <p><strong>Контакт: {{this.user.contact_info}}</strong></p>
           {{else}}
-            {{#eq this.status "CHOSEN"}}
-              <p><strong>Contact: {{this.user.contact_info}}</strong></p>
-            {{/eq}}
+            {{#unless ../request.hasChosenSupplier}}
+              {{#eq ../request.status "OPEN"}}
+                <form action="/webapp/responses/{{this.id}}/choose" method="post">
+                  <button type="submit" class="btn">Выбрать поставщика</button>
+                </form>
+              {{/eq}}
+            {{/unless}}
           {{/eq}}
+
         </li>
       {{/each}}
     </ul>
   {{else}}
-    <p>No responses yet.</p>
+    <p>Откликов пока нет.</p>
   {{/if}}
 
-  <a href="/webapp/requests?userId={{request.designer_id}}&role=designer" class="btn">Back to Requests</a>
+  <a href="/webapp/requests?userId={{request.designer_id}}&role=designer" class="btn">Назад к заявкам</a>
 </div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const toggleCheckbox = document.getElementById('statusToggle');
+    const toggleSwitch = document.getElementById('toggleSwitch');
+
+    function updateSwitchColor() {
+      if (toggleCheckbox.checked) {
+        toggleSwitch.classList.add('active');
+      } else {
+        toggleSwitch.classList.remove('active');
+      }
+    }
+
+    if (toggleCheckbox) {
+      toggleCheckbox.addEventListener('change', function() {
+        document.getElementById('statusForm').submit();
+      });
+      // Set initial color
+      updateSwitchColor();
+    }
+  });
+</script>

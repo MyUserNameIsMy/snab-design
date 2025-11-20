@@ -2,11 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectBot } from 'nestjs-telegraf';
 import { Markup, Telegraf } from 'telegraf';
 import { UsersService } from '@/users/users.service';
-import { request, response } from '@prisma/client';
+import { request, response, user } from '@prisma/client';
 import { PrismaService } from '@/prisma/prisma.service';
 import { DirectusService } from '@/directus/directus.service';
 import { InputMediaPhoto } from 'telegraf/types';
-import axios from 'axios';
 
 @Injectable()
 export class BotService {
@@ -25,21 +24,66 @@ export class BotService {
     }
   }
 
-  async broadcastRequest(newRequest: request) {
-    const suppliers = await this.usersService.findAllSuppliers();
-    const messageText = `Новая заявка:\n\n${newRequest.details_text}`;
+  async sendRequestToSupplier(fullRequest: request & { request_files: any[] }, supplier: user) {
+    if (!supplier.telegram_id) return;
 
+    const messageText = `Новая заявка:\n\n${fullRequest.details_text}`;
     const keyboard = Markup.inlineKeyboard([
-      Markup.button.callback(
-        'Откликнуться',
-        `respond_request_${newRequest.id}`,
-      ),
+      Markup.button.callback('Откликнуться', `respond_request_${fullRequest.id}`),
     ]);
 
-    for (const supplier of suppliers) {
-      if (supplier.telegram_id) {
+    const fileIds = fullRequest.request_files
+      .map((f) => f.directus_files_id)
+      .filter((id): id is string => !!id);
+
+    let mediaGroup: InputMediaPhoto[] = [];
+    if (fileIds.length > 0) {
+      const mediaPromises = fileIds.map(async (fileId) => {
+        const fileBuffer = await this.directusService.fetchFileBuffer(fileId);
+        return { source: fileBuffer };
+      });
+      const mediaSources = await Promise.all(mediaPromises);
+      mediaGroup = mediaSources.map((source, index) => ({
+        type: 'photo',
+        media: source,
+        caption: index === 0 ? messageText : undefined,
+      }));
+    }
+
+    try {
+      if (mediaGroup.length > 0) {
+        if (messageText.length > 1024) {
+          await this.bot.telegram.sendMessage(Number(supplier.telegram_id), messageText);
+          await this.bot.telegram.sendMediaGroup(
+            Number(supplier.telegram_id),
+            mediaGroup.map((m) => ({ ...m, caption: undefined })),
+          );
+        } else {
+          await this.bot.telegram.sendMediaGroup(Number(supplier.telegram_id), mediaGroup);
+        }
+        await this.sendMessage(supplier.telegram_id, 'Что вы хотите сделать?', keyboard);
+      } else {
         await this.sendMessage(supplier.telegram_id, messageText, keyboard);
       }
+    } catch (error) {
+      console.error(`Failed to send request to supplier ${supplier.id}:`, error);
+    }
+  }
+
+  async broadcastRequest(newRequest: request) {
+    const fullRequest = await this.prisma.request.findUnique({
+      where: { id: newRequest.id },
+      include: { request_files: true },
+    });
+
+    if (!fullRequest) {
+      console.error(`Could not find request with id ${newRequest.id} to broadcast.`);
+      return;
+    }
+
+    const suppliers = await this.usersService.findAllSuppliers();
+    for (const supplier of suppliers) {
+      await this.sendRequestToSupplier(fullRequest, supplier);
     }
   }
 

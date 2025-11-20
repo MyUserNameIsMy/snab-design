@@ -4,6 +4,8 @@ import { UsersService } from '@/users/users.service';
 import { Markup } from 'telegraf';
 import { PrismaService } from '@/prisma/prisma.service';
 import { BotService } from '@/bot/bot.service';
+import { DirectusService } from '@/directus/directus.service';
+import { InputMediaPhoto } from 'telegraf/types';
 
 @Update()
 export class BotUpdate {
@@ -11,6 +13,7 @@ export class BotUpdate {
     private readonly usersService: UsersService,
     private readonly prisma: PrismaService,
     private readonly botService: BotService,
+    private readonly directusService: DirectusService, // Inject DirectusService
   ) {}
 
   @Start()
@@ -90,6 +93,35 @@ export class BotUpdate {
     const user = await this.usersService.findOrCreate(ctx.from.id);
     if (user.is_confirmed && user.role === 'SUPPLIER') {
       const requestId = ctx.match[1];
+      const request = await this.prisma.request.findUnique({
+        where: { id: requestId },
+        include: { request_files: true },
+      });
+
+      if (!request) {
+        await ctx.answerCbQuery('Заявка не найдена.');
+        return;
+      }
+
+      await ctx.answerCbQuery(); // Acknowledge the button press
+
+      const fileIds = request.request_files
+        .map((f) => f.directus_files_id)
+        .filter((id): id is string => !!id);
+
+      // if (fileIds.length > 0) {
+      //   const mediaPromises = fileIds.map(async (fileId) => {
+      //     const fileBuffer = await this.directusService.fetchFileBuffer(fileId);
+      //     return { source: fileBuffer };
+      //   });
+      //   const mediaSources = await Promise.all(mediaPromises);
+      //   const mediaGroup: InputMediaPhoto[] = mediaSources.map((source) => ({
+      //     type: 'photo',
+      //     media: source,
+      //   }));
+      //   await ctx.replyWithMediaGroup(mediaGroup);
+      // }
+
       await ctx.scene.enter('supplier-scene', { request_id: requestId });
     } else {
       await ctx.answerCbQuery(

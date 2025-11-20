@@ -1,12 +1,12 @@
 <link rel="stylesheet" href="/css/style.css">
 <div class="container">
-  <h1>My Requests</h1>
+  <h1>Мои заявки</h1>
   <div class="search-filter">
-    <input type="text" id="searchInput" placeholder="Search...">
+    <input type="text" id="searchInput" placeholder="Поиск...">
     <select id="statusFilter">
-      <option value="">All Statuses</option>
-      <option value="OPEN">Open</option>
-      <option value="CLOSED">Closed</option>
+      <option value="">Все статусы</option>
+      <option value="OPEN">Открытые</option>
+      <option value="CLOSED">Закрытые</option>
     </select>
   </div>
   <ul id="requestsList">
@@ -14,7 +14,7 @@
       <li class="card">
         <a href="/webapp/requests/{{this.id}}?userId={{../userId}}&role={{../role}}">
           <h3><span class="text-truncate">{{this.details_text}}</span></h3>
-          <p>Status: <span class="status-{{toLowerCase this.status}}">{{this.status}}</span></p>
+          <p>Статус: <span class="status-{{toLowerCase this.status}}">{{this.status}}</span></p>
         </a>
       </li>
     {{/each}}

@@ -97,15 +97,19 @@ export class WebappService {
         },
       },
     });
-
+  
+    let hasChosenSupplier = false;
     if (request) {
       this.addPhotoUrls(request.request_files);
       request.response.forEach((response) => {
         this.addPhotoUrls(response.response_files);
+        if (response.status === 'CHOSEN') {
+          hasChosenSupplier = true;
+        }
       });
     }
-
-    return request;
+  
+    return { ...request, hasChosenSupplier };
   }
 
   async getResponse(id: string) {
@@ -141,55 +145,43 @@ export class WebappService {
   }
 
   async chooseResponse(responseId: string) {
+    // Only update the response status to CHOSEN
     const updatedResponse = await this.prisma.response.update({
       where: { id: responseId },
       data: { status: 'CHOSEN' },
-      include: { request: true },
-    });
-
-    if (!updatedResponse.request_id) {
-      throw new Error('Response not linked to a request.');
-    }
-
-    await this.prisma.request.update({
-      where: { id: updatedResponse.request_id },
-      data: { status: 'CLOSED' },
-    });
-
-    const fullResponse = await this.prisma.response.findUnique({
-      where: { id: responseId },
       include: {
         request: { include: { user: true } },
         user: true,
       },
     });
-
+  
     if (
-      !fullResponse ||
-      !fullResponse.request ||
-      !fullResponse.user ||
-      !fullResponse.request.user
+      !updatedResponse ||
+      !updatedResponse.request ||
+      !updatedResponse.user ||
+      !updatedResponse.request.user
     ) {
       throw new Error('Could not retrieve all parties for contact exchange.');
     }
-
-    const designer = fullResponse.request.user;
-    const supplier = fullResponse.user;
-
+  
+    const designer = updatedResponse.request.user;
+    const supplier = updatedResponse.user;
+  
+    // Send notifications
     if (designer.telegram_id) {
       await this.botService.sendMessage(
         designer.telegram_id,
-        `Вы выбрали поставщика для заявки "${fullResponse.request.details_text}".\nКонтакты: ${supplier.contact_info || 'Не указаны'}`,
+        `Вы выбрали поставщика для заявки "${updatedResponse.request.details_text}".\nКонтакты: ${supplier.contact_info || 'Не указаны'}`,
       );
     }
     if (supplier.telegram_id) {
       await this.botService.sendMessage(
         supplier.telegram_id,
-        `Вас выбрали для заявки "${fullResponse.request.details_text}"!\nКонтакты дизайнера: ${designer.contact_info || 'Не указаны'}`,
+        `Вас выбрали для заявки "${updatedResponse.request.details_text}"!\nКонтакты дизайнера: ${designer.contact_info || 'Не указаны'}`,
       );
     }
-
-    return fullResponse;
+  
+    return updatedResponse;
   }
 
   async sendResponsePromptToSupplier(
@@ -198,22 +190,22 @@ export class WebappService {
   ) {
     const request = await this.prisma.request.findUnique({
       where: { id: requestId },
+      include: { request_files: true },
     });
 
     if (!request) {
       throw new Error(`Request with ID ${requestId} not found.`);
     }
 
-    const messageText = `Заявка:\n\n${request.details_text}`;
-    const keyboard = Markup.inlineKeyboard([
-      Markup.button.callback('Откликнуться', `respond_request_${request.id}`),
-    ]);
+    const supplier = await this.prisma.user.findUnique({
+      where: { telegram_id: supplierTelegramId },
+    });
 
-    await this.botService.sendMessage(
-      supplierTelegramId,
-      messageText,
-      keyboard,
-    );
+    if (!supplier) {
+      throw new Error(`Supplier with Telegram ID ${supplierTelegramId} not found.`);
+    }
+
+    await this.botService.sendRequestToSupplier(request, supplier);
   }
 
   async updateRequestStatus(requestId: string, status: 'OPEN' | 'CLOSED') {

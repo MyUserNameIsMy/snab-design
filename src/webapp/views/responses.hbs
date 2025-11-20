@@ -1,21 +1,21 @@
 <link rel="stylesheet" href="/css/style.css">
 <div class="container">
-  <h1>My Responses</h1>
+  <h1>Мои отклики</h1>
   <div class="search-filter">
-    <input type="text" id="searchInput" placeholder="Search...">
+    <input type="text" id="searchInput" placeholder="Поиск...">
     <select id="statusFilter">
-      <option value="">All Statuses</option>
-      <option value="SENT">Sent</option>
-      <option value="CHOSEN">Chosen</option>
+      <option value="">Все статусы</option>
+      <option value="SENT">Отправленные</option>
+      <option value="CHOSEN">Выбранные</option>
     </select>
   </div>
   <ul id="responsesList">
     {{#each responses}}
       <li class="card">
         <a href="/webapp/responses/{{this.id}}">
-          <h3>Request: <span class="text-truncate">{{this.request.details_text}}</span></h3>
-          <p>Response: <span class="text-truncate">{{this.details_text}}</span></p>
-          <p>Status: <span class="response-status-value status-{{toLowerCase this.status}}">{{this.status}}</span></p>
+          <h3>Заявка: <span class="text-truncate">{{this.request.details_text}}</span></h3>
+          <p>Отклик: <span class="text-truncate">{{this.details_text}}</span></p>
+          <p>Статус: <span class="response-status-value status-{{toLowerCase this.status}}">{{this.status}}</span></p>
         </a>
       </li>
     {{/each}}

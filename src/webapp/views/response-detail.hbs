@@ -1,25 +1,25 @@
 <link rel="stylesheet" href="/css/style.css">
 <div class="container">
   <h1>{{response.request.details_text}}</h1>
-  <p>Status: {{response.status}}</p>
-  <p>Comment: {{response.details_text}}</p>
-  <h2>Request Photos</h2>
+  <p>Статус: {{response.status}}</p>
+  <p>Комментарий: {{response.details_text}}</p>
+  <h2>Фото заявки</h2>
   <div class="photo-gallery">
     {{#each response.request.request_files}}
       <div class="photo-item">
         <div class="skeleton"></div>
-        <img src="{{this.directus_files.photo_url}}" alt="Request Photo" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
+        <img src="{{this.directus_files.photo_url}}" alt="Фото заявки" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
       </div>
     {{/each}}
   </div>
-  <h2>Response Photos</h2>
+  <h2>Фото отклика</h2>
   <div class="photo-gallery">
     {{#each response.response_files}}
       <div class="photo-item">
         <div class="skeleton"></div>
-        <img src="{{this.directus_files.photo_url}}" alt="Response Photo" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
+        <img src="{{this.directus_files.photo_url}}" alt="Фото отклика" onload="this.style.display='block'; this.previousElementSibling.style.display='none';" onerror="this.previousElementSibling.style.display='block';">
       </div>
     {{/each}}
   </div>
-  <a href="/webapp/responses?userId={{response.supplier_id}}&role=supplier" class="btn">Back to Responses</a>
+  <a href="/webapp/responses?userId={{response.supplier_id}}&role=supplier" class="btn">Назад к откликам</a>
 </div>
