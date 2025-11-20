@@ -8,7 +8,7 @@
       <div class="status-toggle-container">
         <form id="statusForm" action="/webapp/requests/{{request.id}}/status" method="post" style="display: none;">
           <input type="hidden" name="designerId" value="{{userId}}">
-          <input type="hidden" id="statusInput" name="status" value="{{#if (eq request.status "OPEN")}}CLOSED{{else}}OPEN{{/if}}">
+          <input type="hidden" id="statusInput" name="status" value="{{#eq request.status "OPEN"}}CLOSED{{else}}OPEN{{/eq}}">
         </form>
         <label class="toggle-switch" id="toggleSwitch">
           <input type="checkbox" id="statusToggle" {{#eq request.status "OPEN"}}checked{{/eq}}>
